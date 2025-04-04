@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trivia-Ange | UST Angelicum College</title>
+    <style>
+        :root {
+            --dominican-blue: #0056b3;
+            --dominican-gold: #FFD700;
+            --light-blue: #e6f0fa;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        header {
+            background: linear-gradient(135deg, var(--dominican-blue), #003366);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 3rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        header p {
+            font-style: italic;
+            opacity: 0.9;
+            font-size: 1.2rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 20px;
+        }
+        .trivia-card {
+            background: white;
+            border-left: 5px solid var(--dominican-gold);
+            padding: 1.8rem;
+            margin: 2rem 0;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            border-radius: 0 8px 8px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .trivia-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--light-blue);
+            opacity: 0.3;
+            z-index: -1;
+        }
+        .trivia-card h3 {
+            color: var(--dominican-blue);
+            margin-top: 0;
+            font-size: 1.4rem;
+        }
+        .trivia-number {
+            background: var(--dominican-gold);
+            color: var(--dominican-blue);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        footer {
+            background-color: var(--dominican-blue);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+        .general-info {
+            background: white;
+            padding: 2rem;
+            margin: 3rem 0;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+        .general-info h2 {
+            color: var(--dominican-blue);
+            border-bottom: 2px solid var(--dominican-gold);
+            padding-bottom: 0.5rem;
+        }
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+            .container {
+                padding: 0 15px;
+            }
+            .trivia-card {
+                padding: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Trivia-Ange</h1>
+        <p>Did You Know? Fascinating facts about UST Angelicum College</p>
+    </header>
+
+    <div class="container">
+        <!-- Did You Know Trivia -->
+        <div class="trivia-card">
+            <div class="trivia-number">1</div>
+            <h3>Non-Graded System</h3>
+            <p>UST Angelicum was one of the first schools in the Philippines to adopt a non-graded system, meaning students progress based on mastery rather than traditional grade levels.</p>
+        </div>
+
+        <div class="trivia-card">
+            <div class="trivia-number">2</div>
+            <h3>Founded by a Dominican Priest</h3>
+            <p>The school was established in 1972 by Fr. Rogelio B. Alarcon, O.P., a Dominican priest who wanted a more flexible and individualized approach to education.</p>
+        </div>
+
+        <div class="trivia-card">
+            <div class="trivia-number">3</div>
+            <h3>Connection to the Vatican's Angelicum University</h3>
+            <p>The name "Angelicum" comes from the Pontifical University of Saint Thomas Aquinas (Angelicum) in Rome, a prestigious Dominican university where many Filipino priests, including some UST professors, have studied.</p>
+        </div>
+
+        <div class="trivia-card">
+            <div class="trivia-number">4</div>
+            <h3>Sarah Geronimo's Alma Mater</h3>
+            <p>Pop superstar Sarah Geronimo studied here before transferring to another school. She remains one of its most famous alumni.</p>
+        </div>
+
+        <div class="trivia-card">
+            <div class="trivia-number">5</div>
+            <h3>No Numerical Grades Until College</h3>
+            <p>In its basic education program, students receive descriptive evaluations (like "Proficient" or "Advancing") instead of traditional number grades. Numerical grades only appear in college.</p>
+        </div>
+
+        <div class="trivia-card">
+            <div class="trivia-number">6</div>
+            <h3>Bianca Bustamante, F1 Academy Racer</h3>
+            <p>Bianca Bustamante, the first Filipina to race in the F1 Academy (a Formula 1 women's racing series), is an alumna of UST Angelicum.</p>
+        </div>
+
+        <div class="trivia-card">
+            <div class="trivia-number">7</div>
+            <h3>Formerly an All-Boys School</h3>
+            <p>When it first opened in 1972, Angelicum was an all-boys school. It later became co-educational.</p>
+        </div>
+
+        <div class="trivia-card">
+            <div class="trivia-number">8</div>
+            <h3>UST Affiliation (But Independent Financially)</h3>
+            <p>Despite being integrated with UST Manila in 2018, Angelicum still manages its own finances and operations, retaining its unique identity.</p>
+        </div>
+
+        <div class="trivia-card">
+            <div class="trivia-number">9</div>
+            <h3>No School Uniform Policy (Before)</h3>
+            <p>Unlike most Catholic schools in the Philippines, Angelicum did not require uniforms for many years, promoting a more relaxed environment. However, policies may have changed since integration with UST.</p>
+        </div>
+
+        <div class="trivia-card">
+            <div class="trivia-number">10</div>
+            <h3>Home of the "Tigercubs" & "Roebucks"</h3>
+            <p>The school's mascots are the Tigercubs (for younger students) and Roebucks (for older students), inspired by the Dominican tradition of using animals as symbols.</p>
+        </div>
+
+        <!-- General Information Section -->
+        <div class="general-info">
+            <h2>About UST Angelicum College</h2>
+            <p><strong>Full Name:</strong> University of Santo Tomas – Angelicum College (formerly Angelicum School and Angelicum College).</p>
+            <p><strong>Type:</strong> Private, non-profit, non-graded Catholic basic and higher education institution.</p>
+            <p><strong>Religious Affiliation:</strong> Roman Catholic (Dominican Order).</p>
+            <p><strong>Motto:</strong> Caritas, Justitia, Fortitudo (Charity, Justice, Fortitude).</p>
+            <p><strong>Established:</strong> July 1972 (founded by Dominican priest Rev. Fr. Rogelio B. Alarcon, OP).</p>
+            <p><strong>Location:</strong> Quezon City, Metro Manila, Philippines.</p>
+            <p><strong>Campus:</strong> Urban.</p>
+            
+            <h3>Integration with UST</h3>
+            <p>In 2018, it was renamed UST Angelicum College after integrating with the University of Santo Tomas (UST).</p>
+            <p>A new Board of Trustees was formed (9 members from UST Manila, 3 from Angelicum).</p>
+            <p>Retains administrative and financial independence.</p>
+            <p>UST Rector serves as Chief Executive Officer, while Angelicum's former rector became Chief Operating Officer.</p>
+            
+            <h3>Notable Alumni</h3>
+            <ul>
+                <li>Sarah Geronimo (Singer, Actress)</li>
+                <li>Julie Anne San Jose (Singer, Actress)</li>
+                <li>Bernadette Sembrano (News Anchor)</li>
+                <li>Antonio Trillanes (Politician)</li>
+                <li>Bianca Bustamante (Racing Driver)</li>
+            </ul>
+            
+            <p><strong>Official website:</strong> <a href="http://www.ustangelicum.edu.ph" target="_blank">www.ustangelicum.edu.ph</a></p>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2024 Trivia-Ange | UST Angelicum College Trivia Collection</p>
+        <p>All information is presented for educational purposes only</p>
+    </footer>
+</body>
+</html>
