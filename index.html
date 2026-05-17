@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium Finals Reviewer Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #090a10; --card: #121424; --card2: #191c32; --border: #262b49;
+    --accent1: #7c6af7; --accent2: #4fd8c4; --accent3: #f7a26a;
+    --correct: #3ecf8e; --wrong: #f26c6c; --text: #e8eaf0; --muted: #6b7296;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { 
+    background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; 
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    overflow-x: hidden;
+  }
+  header { 
+    width: 100%; padding: 2rem 2rem 1.5rem; text-align: center; 
+    border-bottom: 1px solid var(--border); background: linear-gradient(180deg, #111327 0%, transparent 100%);
+  }
+  header h1 { 
+    font-family: 'Syne', sans-serif; font-size: clamp(1.5rem, 5vw, 2.5rem); font-weight: 800; 
+    background: linear-gradient(135deg, var(--accent1), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  header p { color: var(--muted); font-size: .9rem; margin-top: .4rem; font-weight: 400; }
+  
+  .container { width: 100%; max-width: 720px; padding: 0 1.5rem; }
+  
+  /* Setup Dashboard View */
+  #setup-screen { padding: 2.5rem 0; animation: fadeSlide .4s ease forwards; }
+  .panel-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 2rem; }
+  .panel-card h2 { font-family: 'Syne', sans-serif; font-size: 1.3rem; margin-bottom: 1rem; color: var(--accent2); }
+  .topic-selectors { display: grid; grid-template-columns: 1fr; gap: .75rem; margin-bottom: 2rem; }
+  .topic-checkbox-label {
+    display: flex; align-items: center; gap: 1rem; background: var(--card2); 
+    border: 1px solid var(--border); border-radius: 12px; padding: 1rem; cursor: pointer;
+    transition: all .2s ease; user-select: none;
+  }
+  .topic-checkbox-label:hover { border-color: var(--accent1); background: #1c203a; }
+  .topic-checkbox-label input { transform: scale(1.2); accent-color: var(--accent1); cursor: pointer; }
+  .topic-title { font-weight: 500; font-size: .95rem; }
+  #start-btn { 
+    width: 100%; padding: 1.1rem; background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    color: #fff; border: none; border-radius: 14px; font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 1.1rem; cursor: pointer; transition: transform .2s, opacity .2s;
+  }
+  #start-btn:hover { opacity: .9; transform: translateY(-2px); }
+  
+  /* Progress & Tracking UI */
+  #progress-wrap { padding-top: 1.5rem; display: none; }
+  #progress-label { display: flex; justify-content: space-between; font-size: .78rem; color: var(--muted); margin-bottom: .5rem; font-family: 'Syne', sans-serif; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+  #progress-bar-bg { width: 100%; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  #progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent1), var(--accent2)); border-radius: 99px; transition: width .4s ease; width: 0%; }
+  #score-ribbon { display: none; gap: .8rem; padding-top: 1rem; }
+  .ribbon-chip { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: .6rem .8rem; text-align: center; }
+  .ribbon-chip span { display: block; font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-family: 'Syne', sans-serif; }
+  .ribbon-chip strong { font-size: 1.25rem; font-family: 'Syne', sans-serif; font-weight: 700; }
+  #chip-correct strong { color: var(--correct); } #chip-wrong strong { color: var(--wrong); } #chip-pct strong { color: var(--accent2); }
+  
+  /* Quiz Play Area */
+  #quiz-area { padding: 1.5rem 0 4rem; display: none; }
+  .q-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 2rem; position: relative; }
+  @keyframes fadeSlide { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .q-meta { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+  .q-tag { font-size: .68rem; font-family: 'Syne', sans-serif; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; border-radius: 6px; padding: .25rem .65rem; }
+  .tag-self { background: #231942; color: #be95ff; border: 1px solid #be95ff33; }
+  .tag-gov { background: #141940; color: #7c6af7; border: 1px solid #7c6af733; }
+  .tag-ops { background: #0c2e2b; color: #4fd8c4; border: 1px solid #4fd8c433; }
+  .tag-type { background: #261c14; color: var(--accent3); border: 1px solid #f7a26a33; }
+  .q-text { font-size: 1.1rem; line-height: 1.65; margin-bottom: 1.8rem; color: var(--text); font-weight: 400; }
+  .options { display: flex; flex-direction: column; gap: .75rem; }
+  .opt-btn { background: var(--card2); border: 1.5px solid var(--border); border-radius: 12px; padding: .9rem 1.1rem; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: .98rem; text-align: left; cursor: pointer; transition: border-color .2s, background .2s, transform .1s; }
+  .opt-btn:hover:not(:disabled) { border-color: var(--accent1); background: #1d203f; transform: translateX(4px); }
+  .opt-btn.correct { border-color: var(--correct); background: #0a251c; color: var(--correct); font-weight: 500; }
+  .opt-btn.wrong { border-color: var(--wrong); background: #280f0f; color: var(--wrong); }
+  .opt-btn:disabled { cursor: default; }
+  .tf-row { display: flex; gap: 1rem; }
+  .tf-btn { flex: 1; padding: 1.1rem; border-radius: 14px; font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; border: 1.5px solid var(--border); background: var(--card2); color: var(--text); transition: all .2s; }
+  .tf-btn:hover:not(:disabled) { transform: scale(1.02); border-color: var(--accent1); }
+  .tf-btn.correct { border-color: var(--correct); background: #0a251c; color: var(--correct); }
+  .tf-btn.wrong { border-color: var(--wrong); background: #280f0f; color: var(--wrong); }
+  .tf-btn:disabled { cursor: default; }
+  .fill-row { display: flex; gap: .7rem; flex-wrap: wrap; }
+  .fill-input { flex: 1; min-width: 220px; background: var(--card2); border: 1.5px solid var(--border); border-radius: 12px; padding: .9rem 1.1rem; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: .98rem; outline: none; transition: border-color .2s; }
+  .fill-input:focus { border-color: var(--accent1); }
+  .fill-input.correct { border-color: var(--correct); background: #0a251c; color: var(--correct); }
+  .fill-input.wrong { border-color: var(--wrong); background: #280f0f; color: var(--wrong); }
+  .submit-btn { background: var(--accent1); color: #fff; border: none; border-radius: 12px; padding: .9rem 1.5rem; font-family: 'Syne', sans-serif; font-weight: 700; cursor: pointer; transition: opacity .2s, transform .1s; }
+  .submit-btn:hover { opacity: .9; transform: scale(1.02); }
+  .submit-btn:disabled { opacity: .4; cursor: default; }
+  .feedback { margin-top: 1.3rem; border-radius: 14px; padding: 1.1rem 1.3rem; font-size: .95rem; line-height: 1.6; display: none; }
+  .feedback.show { display: block; animation: fadeSlide .25s ease; }
+  .feedback.correct-fb { background: rgba(62,207,142,0.08); border: 1px solid rgba(62,207,142,0.3); color: var(--correct); }
+  .feedback.wrong-fb { background: rgba(242,108,108,0.08); border: 1px solid rgba(242,108,108,0.3); color: #fba3a3; }
+  #next-btn { display: none; margin-top: 1.5rem; width: 100%; padding: 1.1rem; background: linear-gradient(135deg, var(--accent1), var(--accent2)); color: #fff; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.05rem; letter-spacing: .02em; border: none; border-radius: 14px; cursor: pointer; transition: opacity .2s, transform .15s; }
+  #next-btn:hover { opacity: .9; transform: translateY(-2px); }
+  #next-btn.show { display: block; animation: fadeSlide .3s ease; }
+  
+  /* Results View Layout */
+  #results-screen { display: none; padding: 2.5rem 0 5rem; text-align: center; }
+  #results-screen h2 { font-family: 'Syne', sans-serif; font-size: 2.2rem; font-weight: 800; background: linear-gradient(135deg, var(--accent1), var(--accent2)); -webkit-background-clip: text;-webkit-text-fill-color: transparent; margin-bottom: .4rem; }
+  #results-screen p.sub { color: var(--muted); font-size: .95rem; margin-bottom: 2rem; }
+  .result-big { font-family: 'Syne', sans-serif; font-size: 5rem; font-weight: 800; line-height: 1; margin-bottom: .4rem; }
+  .result-label { color: var(--muted); font-size: .95rem; margin-bottom: 2rem; font-weight: 500; }
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+  .result-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 1.2rem; }
+  .result-card span { display: block; font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; font-family: 'Syne', sans-serif; margin-bottom: .4rem; }
+  .result-card strong { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 700; }
+  .rc-correct strong { color: var(--correct); } .rc-wrong strong { color: var(--wrong); }
+  
+  /* UX Category Stats Section */
+  .category-breakdown { text-align: left; background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 1.5rem; margin-bottom: 2rem; }
+  .category-breakdown h3 { font-family: 'Syne', sans-serif; font-size: .95rem; color: var(--text); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: .5rem; }
+  .cat-row { margin-bottom: 1rem; }
+  .cat-row:last-child { margin-bottom: 0; }
+  .cat-info { display: flex; justify-content: space-between; font-size: .88rem; margin-bottom: .35rem; }
+  .cat-name { color: var(--text); font-weight: 500; }
+  .cat-pct { color: var(--muted); font-family: 'Syne', sans-serif; font-weight: 600; }
+  .cat-bar-bg { width: 100%; height: 6px; background: var(--card2); border-radius: 4px; overflow: hidden; }
+  .cat-bar-fill { height: 100%; background: var(--accent1); border-radius: 4px; width: 0%; transition: width .6s ease; }
+  
+  #restart-btn { background: linear-gradient(135deg, var(--accent1), var(--accent2)); color: #fff; border: none; border-radius: 14px; padding: 1.1rem 3rem; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.05rem; cursor: pointer; transition: opacity .2s, transform .15s; margin-top: .5rem; }
+  #restart-btn:hover { opacity: .9; transform: translateY(-2px); }
+  #missed-section { text-align: left; margin-top: 2.5rem; }
+  #missed-section h3 { font-family: 'Syne', sans-serif; font-size: .9rem; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 1.2rem; }
+  .missed-item { background: var(--card); border: 1px solid #361a1a; border-left: 4px solid var(--wrong); border-radius: 12px; padding: 1.1rem; margin-bottom: .85rem; font-size: .92rem; line-height: 1.6; }
+  .missed-item .mq { color: var(--text); font-weight: 500; margin-bottom: .45rem; }
+  .missed-item .ma { color: var(--correct); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📚 Premium Finals Reviewer</h1>
+  <p>Adaptive Architecture Engine for Advanced Academic Success</p>
+</header>
+
+<div class="container">
+  <div id="setup-screen">
+    <div class="panel-card">
+      <h2>Configure Evaluation Scope</h2>
+      <p style="color: var(--muted); font-size: .88rem; margin-bottom: 1.5rem;">Select the module topics you wish to target in this execution module:</p>
+      <div class="topic-selectors" id="topic-selectors-box">
+        </div>
+      <button id="start-btn">Initialize Session →</button>
+    </div>
+  </div>
+
+  <div id="progress-wrap">
+    <div id="progress-label">
+      <span id="q-counter">Loading Engine...</span>
+      <span id="q-topic"></span>
+    </div>
+    <div id="progress-bar-bg"><div id="progress-bar"></div></div>
+  </div>
+
+  <div id="score-ribbon">
+    <div class="ribbon-chip" id="chip-correct"><span>Correct</span><strong id="sc-correct">0</strong></div>
+    <div class="ribbon-chip" id="chip-wrong"><span>Wrong</span><strong id="sc-wrong">0</strong></div>
+    <div class="ribbon-chip" id="chip-pct"><span>Accuracy</span><strong id="sc-pct">—</strong></div>
+  </div>
+
+  <div id="quiz-area">
+    <div class="q-card" id="q-card">
+      <div class="q-meta" id="q-meta"></div>
+      <div class="q-text" id="q-text"></div>
+      <div id="q-input"></div>
+      <div class="feedback" id="feedback"></div>
+      <button id="next-btn">Proceed to Next Item →</button>
+    </div>
+  </div>
+
+  <div id="results-screen">
+    <h2>Analysis Complete! 🎉</h2>
+    <p class="sub">Performance breakdown generated based on execution criteria.</p>
+    <div class="result-big" id="res-pct"></div>
+    <div class="result-label" id="res-lbl"></div>
+    
+    <div class="result-grid">
+      <div class="result-card rc-correct"><span>Total Correct</span><strong id="res-correct"></strong></div>
+      <div class="result-card rc-wrong"><span>Total Errant</span><strong id="res-wrong"></strong></div>
+    </div>
+    
+    <div class="category-breakdown">
+      <h3>Module Performance Matrix</h3>
+      <div id="category-bars-container"></div>
+    </div>
+    
+    <button id="restart-btn">🔄 Initialize New Session</button>
+    
+    <div id="missed-section">
+      <h3>Errant Items Review Protocol</h3>
+      <div id="missed-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Immutable Source Evaluation Metrics Data Array
+var Q=[
+  {topic:"Managing the Self",type:"mcq",q:"What is the definition of 'Learning' in the context of Managing the Self?",opts:["The ability to recall past information","A change in behavior potentiality that happens when we absorb knowledge","The translation of potential into observable action","Adapting movement to stimuli"],ans:1},
+  {topic:"Managing the Self",type:"mcq",q:"Performance is best defined as:",opts:["Absorbing knowledge effectively","Getting a high grade in school","The translation of learning potentiality into observable behavior","The ability to memorize information quickly"],ans:2},
+  {topic:"Managing the Self",type:"mcq",q:"According to the classic inverted-U curve, which stress level correlates with the HIGHEST performance?",opts:["Low stress","High stress","Moderate stress","Zero stress"],ans:2},
+  {topic:"Managing the Self",type:"tf",q:"High stress leads to MORE brain activity in the cortical areas where higher-level learning happens.",ans:false},
+  {topic:"Managing the Self",type:"mcq",q:"Which type of learning involves learning WITHOUT understanding, such as memorization?",opts:["Rational Learning","Associational Learning","Rote Learning","Motor Learning"],ans:2},
+  {topic:"Managing the Self",type:"mcq",q:"Praying the Angelus every 12 NN is an example of which type of learning?",opts:["Motor Learning","Rote Learning","Appreciational Learning","Associational Learning"],ans:3},
+  {topic:"Managing the Self",type:"mcq",q:"Appreciating art at the national museum or team-building activities that teach camaraderie are examples of:",opts:["Rational Learning","Rote Learning","Motor Learning","Appreciational Learning"],ans:3},
+  {topic:"Managing the Self",type:"mcq",q:"Sports is an example of which learning type?",opts:["Rote Learning","Rational Learning","Motor Learning","Associational Learning"],ans:2},
+  {topic:"Managing the Self",type:"fill",q:"The basic principle of learning that states 'most recent impression or association is more likely to be recalled' is called ___.",keywords:["recency"]},
+  {topic:"Managing the Self",type:"fill",q:"The VARK learning style framework was developed by ___ Fleming.",keywords:["neil","neil fleming"]},
+  {topic:"Managing the Self",type:"mcq",q:"A Kinesthetic learner learns best by:",opts:["Viewing podcasts and lectures","Hearing information","Reading and writing in text form","Doing, through movement, experiments, and practical activities"],ans:3},
+  {topic:"Managing the Self",type:"mcq",q:"A learner who switches from one VARK mode to another depending on context (one at a time) is called:",opts:["Integrative Multimodal","Selective Multimodal","Aural Multimodal","Read/Write Multimodal"],ans:1},
+  {topic:"Managing the Self",type:"tf",q:"Integrative Multimodal learners combine ALL different VARK strategies at the same time.",ans:true},
+  {topic:"Managing the Self",type:"mcq",q:"In SMART Goals, what does the 'A' stand for?",opts:["Achievable","Ambitious","Action Plan","Analytical"],ans:2},
+  {topic:"Managing the Self",type:"tf",q:"According to Goal Setting Theory (Locke and Latham), specific and challenging goals along with appropriate feedback contribute to higher performance.",ans:true},
+  {topic:"Managing the Self",type:"mcq",q:"'Prepotent' needs in Maslow's hierarchy means:",opts:["They can be skipped if unimportant","They must be satisfied before higher-level needs become activated","They are most important regardless of order","They apply only to physiological needs"],ans:1},
+  {topic:"Managing the Self",type:"mcq",q:"Albert Bandura's Social Cognitive Theory emphasizes:",opts:["How biology alone determines motivation","How cognitive, behavioral, personal, and environmental factors interact to determine motivation and behavior","How fixed traits determine academic success","How rewards and punishments shape learning"],ans:1},
+  {topic:"Managing the Self",type:"fill",q:"The belief we have in our own abilities and capability to meet challenges ahead of us is called self-___.",keywords:["efficacy"]},
+  {topic:"Managing the Self",type:"mcq",q:"In Carol Dweck's Growth Mindset Theory, a person with a FIXED mindset:",opts:["Believes they can acquire any ability with effort","Interprets failure as a lack of necessary basic abilities","Embraces challenges as opportunities","Uses the 'Power of Yet'"],ans:1},
+  {topic:"Stress & Self-Care",type:"mcq",q:"Stress is defined as a combination of a:",opts:["Trigger and a response","Stressor and a stress response","Problem and a solution","Situation and an emotion"],ans:1},
+  {topic:"Stress & Self-Care",type:"mcq",q:"Eustress is:",opts:["Long-term negative stress that causes trauma","Often short-term, helps you achieve goals, may help you focus and concentrate better","The same as distress but less severe","A category of cognitive stressors"],ans:1},
+  {topic:"Stress & Self-Care",type:"tf",q:"Distress can only be short-term.",ans:false},
+  {topic:"Stress & Self-Care",type:"mcq",q:"Poverty, pollution, crowding, noise, and natural disasters are examples of which stressor category?",opts:["Cognitive/Thinking Stressors","Life Situation Stressors","Personal Behavior Stressors","Environmental Stressors"],ans:3},
+  {topic:"Stress & Self-Care",type:"mcq",q:"Exams and problems that stress a person based on how they PERCEIVE the situation fall under which stressor category?",opts:["Environmental Stressors","Life Situation Stressors","Cognitive/Thinking Stressors","Personal Behavior Stressors"],ans:2},
+  {topic:"Stress & Self-Care",type:"fill",q:"The body's response to stress by Hans Selye, involving three stages (Alarm, Resistance, Exhaustion/Fatigue), is called the ___ Adaptation Syndrome.",keywords:["general"]},
+  {topic:"Stress & Self-Care",type:"mcq",q:"Which personality type is described as self-driven, competitive, and most likely to develop heart disease?",opts:["Type B","Type C","Type D","Type A"],ans:3},
+  {topic:"Stress & Self-Care",type:"mcq",q:"Type C personality (Temoshok and Dreher) is characterized by:",opts:["Being laid back and non-competitive","Being self-driven and high-achieving","Being pleasant but having difficulty expressing negative emotions","Experiencing increased negative emotions and fearing rejection"],ans:2},
+  {topic:"Stress & Self-Care",type:"mcq",q:"Psychoneuroimmunology studies:",opts:["The psychology of criminal behavior","The interaction between psychological processes and the nervous and immune systems","How the environment causes disease","The study of neurotransmitters only"],ans:1},
+  {topic:"Stress & Self-Care",type:"mcq",q:"'Bahala Na' as a Filipino way of confronting stress reflects:",opts:["Avoidance of all problems","Courage in the face of difficulties","Belief that God will take care of things; improvisatory skills of Filipinos","Resistance against injustice"],ans:2},
+  {topic:"Stress & Self-Care",type:"mcq",q:"'Utang na Loob' can cause stress because it:",opts:["Encourages unconditional positive regard","Refutes unconditional positive regard by creating a debt of gratitude","Creates freedom and independence","Promotes social harmony without pressure"],ans:1},
+  {topic:"Stress & Self-Care",type:"mcq",q:"Which Filipino value refers to sensitivity to attacks on one's self-esteem and dignity?",opts:["Kalayaan","Katarungan","Karangalan","Pakikisama"],ans:2},
+  {topic:"Stress & Self-Care",type:"mcq",q:"Problem-Focused Coping involves:",opts:["Regulating emotions experienced due to the stressful event","Attempting to do something constructive about stressful conditions","Avoiding stressors entirely","Using meditation and exercise"],ans:1},
+  {topic:"Stress & Self-Care",type:"tf",q:"Exercise, taking a bath, and meditating are examples of Emotion-Focused Coping.",ans:true},
+  {topic:"Stress & Self-Care",type:"mcq",q:"The Avoidant (Minimizing) coping style involves:",opts:["Addressing the problem directly and openly","Removing the stressor and avoiding it in the future","Using multiple coping mechanisms simultaneously","Seeking professional help"],ans:1},
+  {topic:"Stress & Self-Care",type:"mcq",q:"Mental Hygiene is the science of:",opts:["Treating diagnosed mental disorders","Maintaining mental health and preventing the development of psychosis, neurosis, or other mental disorders","Diagnosing personality types","Studying stress hormones like cortisol"],ans:1},
+  {topic:"Stress & Self-Care",type:"mcq",q:"Which mental hygiene approach attempts to correct minor behavioral adjustments through counseling and psychotherapy?",opts:["Preventive Approach","Curative Approach","Therapeutic Approach","Self-Care Approach"],ans:2},
+  {topic:"Mental Health",type:"mcq",q:"Which of the following is a RESULT of good mental health?",opts:["Absence of all negative emotions","Productive activities, fulfilling relationships, and ability to cope with life's challenges","Complete immunity from stress","High academic performance only"],ans:1},
+  {topic:"Mental Health",type:"tf",q:"According to the Mental Health Continuum Model, mental health is binary — you are either mentally healthy or mentally ill.",ans:false},
+  {topic:"Mental Health",type:"mcq",q:"In the Ginhawa Model, 'Tatag at Tibay ng Loob' refers to:",opts:["Safety and stable emotional resolve","Social relationships and support","Spirituality, faith, purpose, and meaning","Resilience and ability to overcome challenges"],ans:3},
+  {topic:"Mental Health",type:"mcq",q:"'Kakayahan' in the Ginhawa Model refers to:",opts:["Physical health and strength","Engagement in life-giving activities","Agency and sense of accomplishment","Spirituality and faith"],ans:2},
+  {topic:"Mental Health",type:"mcq",q:"Mental DISTRESS differs from a mental DISORDER in that distress:",opts:["Is more severe and long-lasting","Requires a diagnosis","Does not need a diagnosis and is usually short-lasting","Always requires professional help"],ans:2},
+  {topic:"Mental Health",type:"mcq",q:"The Biopsychosocial Model of Health and Illness was proposed by:",opts:["Abraham Maslow","Aaron Beck","George Engel","Hans Selye"],ans:2},
+  {topic:"Mental Health",type:"fill",q:"The Diathesis-Stress Model states that mental disorders develop from a ___ or biological predisposition combined with stressful conditions.",keywords:["genetic","genetics"]},
+  {topic:"Mental Health",type:"mcq",q:"'All or Nothing Thinking' (Aaron Beck) is characterized by:",opts:["Predicting negative future events","Black and white thinking — 'If I'm not perfect, I have failed'","Blaming yourself for things that were not your fault","Noticing only failures and not successes"],ans:1},
+  {topic:"Mental Health",type:"mcq",q:"'I feel embarrassed so I must be an idiot' is an example of which cognitive distortion?",opts:["Mental Filter","Labelling","Emotional Reasoning","Personalization"],ans:2},
+  {topic:"Mental Health",type:"mcq",q:"'Jumping to Conclusions' has two subtypes. Which pair is correct?",opts:["Labelling and Personalization","Mind Reading and Fortune Telling","Magnification and Minimization","All or Nothing and Over-generalizing"],ans:1},
+  {topic:"Mental Health",type:"tf",q:"Personalization involves blaming yourself OR others — either direction is a cognitive distortion.",ans:true},
+  {topic:"Mental Health",type:"mcq",q:"Which Philippine law is known as the Mental Health Law?",opts:["RA 10173","RA 11036","RA 9344","RA 10175"],ans:1},
+  {topic:"Mental Health",type:"mcq",q:"A Psychiatrist differs from a Psychologist in that a psychiatrist:",opts:["Has an advanced degree and specializes in psychological testing","Focuses on integrating clients into the community","Is a medical doctor who can conduct and prescribe medical treatments","Focuses on everyday life concerns that are not clinical"],ans:2},
+  {topic:"Mental Health",type:"mcq",q:"A Psychometrician's primary role includes:",opts:["Prescribing medication for mental illness","Administering objective and structured personality tests and conducting preparatory intake interviews","Focusing on resumption of daily living activities","Managing signs and symptoms of clients as a case manager"],ans:1},
+  {topic:"Mental Health",type:"mcq",q:"A Life Coach focuses on:",opts:["Clinical diagnosis of mental disorders","Everyday life concerns that are not clinical in nature","Integration of clients in the community","Resumption of occupational skills"],ans:1},
+  {topic:"Resilience",type:"fill",q:"Resilience comes from the Latin verb 'resilire' (re-salire) which literally means 'to ___ back'.",keywords:["jump"]},
+  {topic:"Resilience",type:"tf",q:"Resilience is a fixed trait that people either have or do not have.",ans:false},
+  {topic:"Resilience",type:"mcq",q:"Dr. Catherine Panter-Brick describes resilience as:",opts:["A fixed personality trait","A process to harness resources to sustain well-being","The absence of stress and adversity","A biological predisposition"],ans:1},
+  {topic:"Resilience",type:"mcq",q:"Which of the following is a PROTECTIVE FACTOR in building resilience?",opts:["Fixed mindset","Avoidance of all stressors","Sense of Coherence — believing the world is manageable and meaningful","Isolation from social relationships"],ans:2},
+  {topic:"Resilience",type:"mcq",q:"Under Determinants of Resiliency, which falls under the PSYCHOLOGICAL determinant?",opts:["Genetics and DNA","The Filipino Spirit","Personality, Coping Mechanisms, and Parenting Styles","Survival and Adaptation"],ans:2},
+  {topic:"Resilience",type:"mcq",q:"Which best describes the difference between COPING and RESILIENCE?",opts:["Coping is long-term while resilience is short-term","Coping refers to ability to control emotions and problem solve; resilience refers to the ability to bounce back and provides hardiness","They are the same concept","Resilience requires professional help while coping does not"],ans:1},
+  {topic:"Governance",type:"mcq",q:"Corporate governance is a set of rules, practices, and procedures whose objective is to:",opts:["Maximize short-term profits for shareholders","Balance the interests of various stakeholders","Reduce government regulation on corporations","Appoint the best possible CEO"],ans:1},
+  {topic:"Governance",type:"fill",q:"The sum of incentive costs, monitoring costs, enforcement costs, and individual financial losses incurred by principals is called ___ cost.",keywords:["agency"]},
+  {topic:"Governance",type:"mcq",q:"Ownership concentration is defined by:",opts:["The percentage of government ownership in the firm","The number of large-block shareholders and the total percentage of shares they own","The ratio of insider vs outsider board members","The market capitalization of the firm"],ans:1},
+  {topic:"Governance",type:"tf",q:"Institutional owners are financial institutions such as mutual funds and pension funds that control large-block shareholder positions.",ans:true},
+  {topic:"Governance",type:"mcq",q:"Which Board of Directors member serves as a source of information about the firm's day-to-day operations?",opts:["Outsiders","Related Outsiders","Insiders","Independent Counsel"],ans:2},
+  {topic:"Governance",type:"mcq",q:"Related Outsiders on a Board of Directors are individuals who:",opts:["Are completely independent of the firm","Are the CEO and top-level managers","Have some relationship with the firm but are not involved in day-to-day operations","Own more than 10% of the firm's shares"],ans:2},
+  {topic:"Governance",type:"mcq",q:"Executive compensation as a governance mechanism seeks to:",opts:["Reduce operating costs through salary cuts","Align the interests of managers and owners through salaries, bonuses, and long-term incentives","Replace the market for corporate control","Ensure regulatory compliance with the SEC"],ans:1},
+  {topic:"Governance",type:"tf",q:"The Market for Corporate Control is an INTERNAL governance mechanism.",ans:false},
+  {topic:"Governance",type:"mcq",q:"The primary responsibility of the Board of Directors is to:",opts:["Manage the firm's day-to-day operations","Act in the owners' best interest by formally monitoring and controlling top-level managers","Set prices and manage supply chains","Oversee government relations"],ans:1},
+  {topic:"Operations & Quality",type:"mcq",q:"Operations management is defined as:",opts:["A financial strategy for reducing overhead costs","A set of managerial activities organizations use in creating their products and/or services","A method of managing human resources","A legal framework for corporate compliance"],ans:1},
+  {topic:"Operations & Quality",type:"tf",q:"Operations management is only important for manufacturing organizations, not service organizations.",ans:false},
+  {topic:"Operations & Quality",type:"mcq",q:"Which of the following is a key decision in designing an operation system?",opts:["Choosing corporate governance mechanisms","Determining product and service mix, capacity, and facilities","Selecting board members","Setting executive compensation packages"],ans:1},
+  {topic:"Operations & Quality",type:"fill",q:"A comprehensive, organization-wide effort to enhance quality in various ways is called ___ Quality Management.",keywords:["total"]},
+  {topic:"Operations & Quality",type:"mcq",q:"Productivity is defined as:",opts:["The total number of units a firm produces per year","A measure of how efficiently an organization is using its resources to create products or services","The ratio of profit to revenue","The speed at which a firm launches new products"],ans:1},
+  {topic:"Operations & Quality",type:"mcq",q:"According to the notes, quality affects which of the following?",opts:["Only competition","Only costs","Competition, costs, and productivity","Government regulation and compliance"],ans:2},
+  {topic:"Operations & Quality",type:"mcq",q:"Which are identified as major areas of the operation system that must be managed?",opts:["Governance and compensation","Purchase and inventory","Marketing and advertising","Compliance and legal affairs"],ans:1}
+];
+
+var questions=[], current=0, correct=0, wrong=0, answered=false, missed=[];
+var activeTopics=[];
+var sessionStats={}; // Tracks real-time performance matrix by topic strings
+
+var tclass={
+  "Managing the Self":"tag-self", "Stress & Self-Care":"tag-self",
+  "Mental Health":"tag-self", "Resilience":"tag-self",
+  "Governance":"tag-gov", "Operations & Quality":"tag-ops"
+};
+
+function shuffle(arr){
+  var a=arr.slice();
+  for(var i=a.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+
+// Map unique topic values out of dataset to configure initialization panel
+function getUniqueTopics(){
+  var ts=[];
+  Q.forEach(function(item){ if(ts.indexOf(item.topic)===-1) ts.push(item.topic); });
+  return ts;
+}
+
+function buildSetupDashboard(){
+  var box = document.getElementById('topic-selectors-box');
+  box.innerHTML = '';
+  var topics = getUniqueTopics();
+  topics.forEach(function(top, idx){
+    var lbl = document.createElement('label');
+    lbl.className = 'topic-checkbox-label';
+    lbl.innerHTML = '<input type="checkbox" value="'+top+'" checked> <span class="topic-title">'+top+'</span>';
+    box.appendChild(lbl);
+  });
+}
+
+function updateScore(){
+  document.getElementById('sc-correct').textContent=correct;
+  document.getElementById('sc-wrong').textContent=wrong;
+  var d=correct+wrong;
+  document.getElementById('sc-pct').textContent=d?Math.round(correct/d*100)+'%':'—';
+}
+
+function initSession(){
+  var checkedBoxes = document.querySelectorAll('#topic-selectors-box input:checked');
+  activeTopics = Array.from(checkedBoxes).map(function(cb){ return cb.value; });
+  
+  if(activeTopics.length === 0){
+    alert('Execution halted: Choose at least one structural module topic to proceed.');
+    return;
+  }
+  
+  // Filter questions matching explicit constraints
+  var filtered = Q.filter(function(item){ return activeTopics.indexOf(item.topic) !== -1; });
+  questions = shuffle(filtered);
+  
+  // Clear metric tracking matrix maps
+  sessionStats = {};
+  activeTopics.forEach(function(t){ sessionStats[t] = { correct: 0, total: 0 }; });
+  questions.forEach(function(q){ if(sessionStats[q.topic]) sessionStats[q.topic].total++; });
+
+  current=0; correct=0; wrong=0; answered=false; missed=[];
+  
+  document.getElementById('setup-screen').style.display='none';
+  document.getElementById('results-screen').style.display='none';
+  document.getElementById('quiz-area').style.display='block';
+  document.getElementById('progress-wrap').style.display='block';
+  document.getElementById('score-ribbon').style.display='flex';
+  
+  updateScore();
+  renderQ();
+}
+
+function renderQ(){
+  answered=false;
+  var q=questions[current], total=questions.length;
+  document.getElementById('q-counter').textContent='Question '+(current+1)+' of '+total;
+  document.getElementById('q-topic').textContent=q.topic;
+  document.getElementById('progress-bar').style.width=(current/total*100)+'%';
+  
+  var tl=q.type==='mcq'?'Multiple Choice':q.type==='tf'?'True / False':'Fill in the Blank';
+  document.getElementById('q-meta').innerHTML='<span class="q-tag '+(tclass[q.topic]||'tag-gov')+'">'+q.topic+'</span><span class="q-tag tag-type">'+tl+'</span>';
+  document.getElementById('q-text').textContent=q.q;
+  
+  var inp=document.getElementById('q-input'); inp.innerHTML='';
+
+  if(q.type==='mcq'){
+    var div=document.createElement('div'); div.className='options';
+    q.opts.forEach(function(opt,i){
+      var btn=document.createElement('button'); btn.className='opt-btn'; btn.textContent=opt;
+      btn.onclick=(function(idx){return function(){handleMCQ(idx,q.ans,q.opts,q.q,q.topic);};})(i);
+      div.appendChild(btn);
+    });
+    inp.appendChild(div);
+  } else if(q.type==='tf'){
+    var row=document.createElement('div'); row.className='tf-row';
+    ['True','False'].forEach(function(val){
+      var btn=document.createElement('button'); btn.className='tf-btn'; btn.textContent=val;
+      btn.onclick=(function(v){return function(){handleTF(v==='True',q.ans,q.q,q.topic);};})(val);
+      row.appendChild(btn);
+    });
+    inp.appendChild(row);
+  } else {
+    var row=document.createElement('div'); row.className='fill-row';
+    var field=document.createElement('input'); field.className='fill-input'; field.type='text'; field.id='fill-inp'; field.placeholder='Type your response code here…'; field.autocomplete='off';
+    var sbtn=document.createElement('button'); sbtn.className='submit-btn'; sbtn.textContent='Verify';
+    sbtn.onclick=function(){ handleFill(field.value.trim(),q.keywords,q.q,q.topic); };
+    field.onkeydown=function(e){ if(e.key==='Enter') sbtn.click(); };
+    row.appendChild(field); row.appendChild(sbtn); inp.appendChild(row);
+    setTimeout(function(){field.focus();},100);
+  }
+
+  var fb=document.getElementById('feedback'); fb.className='feedback'; fb.innerHTML='';
+  var nb=document.getElementById('next-btn'); nb.className=''; nb.style.display='none';
+  
+  var card=document.getElementById('q-card'); card.style.animation='none'; void card.offsetWidth; card.style.animation='';
+}
+
+function showFeedback(ok,msg,topic){
+  var fb=document.getElementById('feedback');
+  fb.className='feedback show '+(ok?'correct-fb':'wrong-fb');
+  fb.innerHTML=(ok?'✅ ':'❌ ')+msg;
+  var nb=document.getElementById('next-btn'); nb.style.display='block'; nb.className='show';
+  
+  if(ok) {
+    correct++;
+    if(sessionStats[topic]) sessionStats[topic].correct++;
+  } else {
+    wrong++;
+  }
+  updateScore();
+}
+
+function handleMCQ(chosen,ansIdx,opts,qText,topic){
+  if(answered)return; answered=true;
+  var btns=document.querySelectorAll('.opt-btn');
+  btns.forEach(function(b,i){
+    b.disabled=true;
+    if(i===ansIdx) b.classList.add('correct');
+    else if(i===chosen && chosen!==ansIdx) b.classList.add('wrong');
+  });
+  var ok=chosen===ansIdx;
+  if(!ok) missed.push({q:qText, a:opts[ansIdx]});
+  showFeedback(ok, ok?'Evaluation verified.':'Correct index value: <strong>'+opts[ansIdx]+'</strong>', topic);
+}
+
+function handleTF(chosen,correctAns,qText,topic){
+  if(answered)return; answered=true;
+  var btns=document.querySelectorAll('.tf-btn');
+  btns.forEach(function(b){
+    b.disabled=true;
+    var bv=b.textContent==='True';
+    if(bv===correctAns) b.classList.add('correct');
+    else if(bv===chosen && chosen!==correctAns) b.classList.add('wrong');
+  });
+  var ok=chosen===correctAns;
+  if(!ok) missed.push({q:qText, a:correctAns?'True':'False'});
+  showFeedback(ok, ok?'Evaluation verified.':'Correct evaluation: <strong>'+(correctAns?'True':'False')+'</strong>', topic);
+}
+
+function handleFill(val,keywords,qText,topic){
+  if(answered || !val) return; answered=true;
+  var field=document.getElementById('fill-inp');
+  var sbtn=document.querySelector('.submit-btn'); if(sbtn) sbtn.disabled=true;
+  var ok=keywords.some(function(k){ return val.toLowerCase().indexOf(k.toLowerCase())!==-1; });
+  field.className='fill-input '+(ok?'correct':'wrong');
+  if(!ok) missed.push({q:qText, a:keywords});
+  showFeedback(ok, ok?'String sequence matched: "'+val+'".':'Expected string target parameter: <strong>'+keywords+'</strong>', topic);
+}
+
+document.getElementById('next-btn').addEventListener('click',function(){
+  current++;
+  if(current>=questions.length) showResults(); else renderQ();
+});
+
+document.getElementById('restart-btn').addEventListener('click', function(){
+  document.getElementById('results-screen').style.display='none';
+  document.getElementById('setup-screen').style.display='block';
+  buildSetupDashboard();
+});
+
+document.getElementById('start-btn').addEventListener('click', initSession);
+
+function showResults(){
+  document.getElementById('quiz-area').style.display='none';
+  document.getElementById('progress-wrap').style.display='none';
+  document.getElementById('score-ribbon').style.display='none';
+  document.getElementById('results-screen').style.display='block';
+  document.getElementById('progress-bar').style.width='100%';
+  
+  var total=questions.length, pct=total?Math.round(correct/total*100):0;
+  var rp=document.getElementById('res-pct'); rp.textContent=pct+'%';
+  rp.style.color=pct>=85?'var(--correct)':pct>=65?'var(--accent3)':'var(--wrong)';
+  
+  var msg=pct>=90?'🌟 Master Framework Achieved.':pct>=75?'👍 Passing parameters matched. Review missed entries.':'📖 Sub-optimal performance layer. Re-initialize metrics processing.';
+  document.getElementById('res-lbl').textContent=correct+' / '+total+' records matched — '+msg;
+  document.getElementById('res-correct').textContent=correct;
+  document.getElementById('res-wrong').textContent=wrong;
+  
+  // Render advanced contextual category performance graph bars
+  var container = document.getElementById('category-bars-container');
+  container.innerHTML = '';
+  activeTopics.forEach(function(t){
+    var stats = sessionStats[t];
+    var catPct = stats.total ? Math.round((stats.correct / stats.total) * 100) : 0;
+    
+    var row = document.createElement('div');
+    row.className = 'cat-row';
+    row.innerHTML = '<div class="cat-info"><span class="cat-name">'+t+'</span><span class="cat-pct">'+stats.correct+'/'+stats.total+' ('+catPct+'%)</span></div>' +
+                    '<div class="cat-bar-bg"><div class="cat-bar-fill" style="width: '+catPct+'%"></div></div>';
+    container.appendChild(row);
+  });
+  
+  var ml=document.getElementById('missed-list'); ml.innerHTML='';
+  if(missed.length===0){
+    ml.innerHTML='<p style="color:var(--correct);font-size:.95rem;font-weight:500;">🎉 Fault-tolerant execution! Clear run recorded.</p>';
+  } else {
+    missed.forEach(function(m){
+      var d=document.createElement('div'); d.className='missed-item';
+      d.innerHTML='<div class="mq">Target Query: '+m.q+'</div><div class="ma">✓ Resolution Param: '+m.a+'</div>';
+      ml.appendChild(d);
+    });
+  }
+}
+
+// Window init deployment call
+window.onload = function(){
+  buildSetupDashboard();
+};
+</script>
+</body>
+</html>
